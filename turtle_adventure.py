@@ -4,7 +4,8 @@ adventure game.
 """
 from turtle import RawTurtle
 from gamelib import Game, GameElement
-
+import time
+from random import random
 
 class TurtleGameElement(GameElement):
     """
@@ -258,28 +259,94 @@ class DemoEnemy(Enemy):
                  size: int,
                  color: str):
         super().__init__(game, size, color)
+        self.__id = None
 
     def create(self) -> None:
+        self.__id = self.canvas.create_oval(0,0,0,0,fill = "red")
         pass
 
     def update(self) -> None:
+        self.x += 1
+        self.y += 1
+        if self.hits_player():
+            self.game.game_over_lose()
         pass
 
     def render(self) -> None:
+        self.canvas.coords(self.__id,
+                           self.x - self.size/2,
+                           self.y - self.size/2,
+                           self.x + self.size/2,
+                           self.y + self.size/2)
         pass
 
     def delete(self) -> None:
         pass
+class ChasingEnemy(Enemy):
+    """
+    Represents an enemy that chases the player.
+    """
+
+    def __init__(self, game: "TurtleAdventureGame", size: int, color: str):
+        super().__init__(game, size, color)
+        self.speed = 2  # Adjust the speed as needed
+
+    def create(self) -> None:
+        # Implement creation of the enemy object
+        pass
+
+    def delete(self) -> None:
+        # Implement deletion of the enemy object
+        pass
+
+    def update(self) -> None:
+        # Move towards the player's position
+        if self.game.player.x > self.x:
+            self.x += self.speed
+        else:
+            self.x -= self.speed
+        if self.game.player.y > self.y:
+            self.y += self.speed
+        else:
+            self.y -= self.speed
+        if self.hits_player():
+            self.game.game_over_lose()
+
+    def render(self) -> None:
+        # Implement rendering of the enemy object
+        pass
 
 
-# TODO
-# Complete the EnemyGenerator class by inserting code to generate enemies
-# based on the given game level; call TurtleAdventureGame's add_enemy() method
-# to add enemies to the game at certain points in time.
-#
-# Hint: the 'game' parameter is a tkinter's frame, so it's after()
-# method can be used to schedule some future events.
 
+class RandomWalkEnemy(Enemy):
+    """
+    Represents an enemy that moves randomly on the screen.
+    """
+
+    def __init__(self, game: "TurtleAdventureGame", size: int, color: str):
+        super().__init__(game, size, color)
+
+    def create(self) -> None:
+        # Implement creation of the enemy object
+        pass
+
+    def delete(self) -> None:
+        # Implement deletion of the enemy object
+        pass
+
+    def update(self) -> None:
+        # Randomly move the enemy within the screen boundaries
+        new_x = self.x + (random() - 0.5) * self.game.screen_width
+        new_y = self.y + (random() - 0.5) * self.game.screen_height
+        # Ensure the enemy stays within the screen boundaries
+        self.x = max(0, min(new_x, self.game.screen_width))
+        self.y = max(0, min(new_y, self.game.screen_height))
+        if self.hits_player():
+            self.game.game_over_lose()
+
+    def render(self) -> None:
+        # Implement rendering of the enemy object
+        pass
 class EnemyGenerator:
     """
     An EnemyGenerator instance is responsible for creating enemies of various
@@ -289,7 +356,7 @@ class EnemyGenerator:
     def __init__(self, game: "TurtleAdventureGame", level: int):
         self.__game: TurtleAdventureGame = game
         self.__level: int = level
-
+        self.__enemy_creation_interval = 5000
         # example
         self.__game.after(100, self.create_enemy)
 
@@ -315,6 +382,20 @@ class EnemyGenerator:
         new_enemy.x = 100
         new_enemy.y = 100
         self.game.add_element(new_enemy)
+        self.__game.after(self.__enemy_creation_interval, self.create_enemy)
+        new_enemy_2 = ChasingEnemy(self.__game, 20, "red")
+        new_enemy_2.x = random() * self.__game.screen_width
+        new_enemy_2.y = random() * self.__game.screen_height
+        # Add the enemy to the game
+        self.__game.add_element(new_enemy_2)
+        self.__game.after(self.__enemy_creation_interval, self.create_enemy)
+        new_enemy_3 = RandomWalkEnemy(self.__game, 20, "orange")
+        new_enemy_3.x = random() * self.__game.screen_width
+        new_enemy_3.y = random() * self.__game.screen_height
+        # Add the enemy to the game
+        self.__game.add_element(new_enemy_3)
+        
+
 
 
 class TurtleAdventureGame(Game): # pylint: disable=too-many-ancestors
